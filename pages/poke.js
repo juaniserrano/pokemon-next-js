@@ -1,15 +1,15 @@
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import styled from 'styled-components';
 import Image from 'next/image';
-import Footer from './footer';
 
 const Container = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  background-color: rgb(241 245 249);
+  background-color: #eee;
   min-height: 100vh;
   color: #333;
   font-family: sans-serif;
@@ -58,23 +58,35 @@ const Pokemon = ({ pokemon }) => {
     .filter((x) => x)
     .pop();
   return (
-    <Link href={`/pokemones/${id}`} passHref>
-      <li className="card border-4 flex-col flex border-sky-600/75 hover:bg-sky-700/75 hover:text-zinc-100 hover:scale-105 duration-300 text-center my-2 text-xl cursor-pointer">
-        <Image
-          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}
-          alt={`${pokemon.name.replace(/^\w/, (c) =>
-            c.toUpperCase()
-          )}`}
-          width={150}
-          height={150}
-        />
-        {pokemon.name.replace(/^\w/, (c) => c.toUpperCase())}
+    <div className="pokemon">
+      <li data-testid={id}>
+        <Link href={`/pokemones/${id}`}>
+          {pokemon.name.replace(/^\w/, (c) => c.toUpperCase())}
+        </Link>
       </li>
-    </Link>
+    </div>
   );
 };
 
-export default function Pokemones({ pokemones }) {
+export default function Pokemones() {
+  const [loading, setLoading] = useState(true);
+  const [pokemones, setPokemones] = useState([]);
+
+  useEffect(() => {
+    const getPokemones = async () => {
+      const res = await fetch(
+        'https://pokeapi.co/api/v2/pokemon?limit=150'
+      );
+      const data = await res.json();
+      setPokemones(data.results);
+      setLoading(false);
+    };
+    getPokemones();
+  }, []);
+
+  if (loading) {
+    return <p>Cargando...</p>;
+  }
   return (
     <>
       <Head>
@@ -86,7 +98,7 @@ export default function Pokemones({ pokemones }) {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Container>
-        <h2 data-testid="titulo">Pokémon App</h2>
+        <p>Pokémon App</p>
         <Title>
           <Image
             src="/pokemonLogo.svg"
@@ -94,7 +106,7 @@ export default function Pokemones({ pokemones }) {
             width={269}
             height={99}
           />
-
+          +
           <Image
             src="/nextJs.svg"
             alt="Next.js"
@@ -108,20 +120,6 @@ export default function Pokemones({ pokemones }) {
           ))}
         </Ul>
       </Container>
-      <Footer></Footer>
     </>
   );
 }
-
-export const getStaticProps = async () => {
-  const response = await fetch(
-    `https://pokeapi.co/api/v2/pokemon?limit=150`
-  );
-  const data = await response.json();
-
-  return {
-    props: {
-      pokemones: data.results,
-    },
-  };
-};
